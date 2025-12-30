@@ -2,7 +2,7 @@
 
 --// SECTION : Core Variables
 
-local Release = "private"
+local Release = "private-build"
 local debugV = false
 
 local Starlight = {
@@ -3328,11 +3328,11 @@ function Starlight:CreateWindow(WindowSettings)
 				if hour >= 4 and hour < 12 then
 					greetingString = "Good Morning!"
 				elseif hour >= 12 and hour < 19 then
-					greetingString = "How's Your Day Going?"
+					greetingString = "Good Afternoon!"
 				elseif hour >= 19 and hour <= 23 then
-					greetingString = "Sweet Dreams."
+					greetingString = "Late Evening!"
 				else
-					greetingString = "Jeez you should be asleep..."
+					greetingString = "Early Morning!"
 				end
 				Tab.Instances.Page.playerUser.Text = `{greetingString} | {Player.Name}`
 
