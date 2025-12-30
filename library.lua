@@ -2782,7 +2782,7 @@ function Starlight:CreateWindow(WindowSettings)
 
 				title.Text = WindowSettings.LoadingSettings and WindowSettings.LoadingSettings.Title
 					or "Starlight Interface Suite"
-				versionLabel.Text = title.Text == "Starlight Interface Suite" and Release or `Starlight UI {Release}`
+				versionLabel.Text = title.Text == " " and Release or `{Release}`
 				title.playerName.Text = Player.DisplayName
 				playerIcon.Image = Players:GetUserThumbnailAsync(
 					Player.UserId,
