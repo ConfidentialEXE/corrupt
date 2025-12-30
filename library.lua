@@ -2,7 +2,7 @@
 
 --// SECTION : Core Variables
 
-local Release = "Prerelease Beta 5.03Meow"
+local Release = "private"
 local debugV = false
 
 local Starlight = {
