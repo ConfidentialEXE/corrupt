@@ -3576,7 +3576,10 @@ function Starlight:CreateWindow(WindowSettings)
 	end
 
 	function Starlight.Window:CreateTabSection(Name: string, Visible)
-		Visible = Visible or (Name ~= nil and true or false)
+		if Visible == nil then
+    		Visible = Name ~= nil
+		end
+
 		Name = Name or "Empty Section"
 
 		local TabSection = {
