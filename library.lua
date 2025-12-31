@@ -1067,8 +1067,8 @@ function Table.Remove(tablre: table, value)
 	end
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+UserInputService.InputBegan:Connect(function(input)
+    --if gameProcessed then return end
     local bind = Starlight.WindowKeybind
     if bind and input.KeyCode == Enum.KeyCode[bind] then
         if Starlight.Window then
