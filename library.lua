@@ -9353,7 +9353,7 @@ function Starlight:CreateWindow(WindowSettings)
 								return "File System unavailable."
 							end
 
-							local fullPath = `{themesPath}/{newName.CurrentValue}{Starlight.FileSystem.FileExtension}`
+							local fullPath = `{themesPath}/{newName.Values.CurrentValue}{Starlight.FileSystem.FileExtension}`
 
 							local success, encoded = ThemeMethods.encodeTheme(Starlight.CurrentTheme)
 							if not success then
