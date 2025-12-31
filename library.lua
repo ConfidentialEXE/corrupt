@@ -999,14 +999,25 @@ local ThemeMethods = {
 			if typeof(data) == "Color3" then
 				return { __type = "Color3", R = data.R * 255, G = data.G * 255, B = data.B * 255 }
 			elseif typeof(data) == "ColorSequence" then
-				local keypoints = {}
-				for _, kp in ipairs(data.Keypoints) do
-					table.insert(keypoints, {
-						Time = kp.Time,
-						Value = { R = kp.Value.R * 255, G = kp.Value.G * 255, B = kp.Value.B * 255 },
-					})
-				end
-				return { __type = "ColorSequence", Keypoints = keypoints }
+			    local keypoints = {}
+			    -- Add nil check for Keypoints
+			    if not data.Keypoints or #data.Keypoints == 0 then
+        			warn("ColorSequence has no keypoints, using default")
+        			return {
+            			__type = "ColorSequence",
+            			Keypoints = {
+                			{ Time = 0.0, Value = { R = 255, G = 255, B = 255 } },
+                			{ Time = 1.0, Value = { R = 255, G = 255, B = 255 } }
+            			}
+        			}
+    			end
+    			for _, kp in ipairs(data.Keypoints) do
+        			table.insert(keypoints, {
+            			Time = kp.Time,
+            			Value = { R = kp.Value.R * 255, G = kp.Value.G * 255, B = kp.Value.B * 255 },
+        			})
+    			end
+    			return { __type = "ColorSequence", Keypoints = keypoints }
 			elseif type(data) == "table" then
 				local newTbl = {}
 				for k, v in pairs(data) do
@@ -1030,14 +1041,25 @@ local ThemeMethods = {
 				if value.__type == "Color3" then
 					return Color3.fromRGB(value.R, value.G, value.B)
 				elseif value.__type == "ColorSequence" then
-					local keypoints = {}
-					for _, kp in ipairs(value.Keypoints) do
-						table.insert(
-							keypoints,
-							ColorSequenceKeypoint.new(kp.Time, Color3.fromRGB(kp.Value.R, kp.Value.G, kp.Value.B))
-						)
-					end
-					return ColorSequence.new(keypoints)
+    				local keypoints = {}
+    				    -- Add nil check for Keypoints
+    				    if not value.Keypoints or type(value.Keypoints) ~= "table" or #value.Keypoints == 0 then
+    				        warn("Invalid ColorSequence data, using default white gradient")
+    				        return ColorSequence.new(Color3.new(1, 1, 1))
+    				    end
+    				    for _, kp in ipairs(value.Keypoints) do
+    				        if kp and kp.Time and kp.Value then
+    				            table.insert(
+    				                keypoints,
+    				                ColorSequenceKeypoint.new(kp.Time, Color3.fromRGB(kp.Value.R, kp.Value.G, kp.Value.B))
+    				            )
+    				        end
+    				    end
+    				    if #keypoints == 0 then
+    				        warn("No valid keypoints found, using default")
+    				        return ColorSequence.new(Color3.new(1, 1, 1))
+    				    end
+    				    return ColorSequence.new(keypoints)
 				else
 					local newTbl = {}
 					for k, v in pairs(value) do
