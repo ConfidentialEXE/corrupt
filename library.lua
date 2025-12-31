@@ -9325,20 +9325,20 @@ function Starlight:CreateWindow(WindowSettings)
 					Icon = 6031471484,
 					CenteredContent = ButtonsCentered,
 					Callback = function()
-						if not newName.CurrentValue or String.IsEmptyOrNull(newName.CurrentValue) then
-							Starlight:Notification({
-								Title = "Theme Error",
-								Icon = 129398364168201,
-								Content = "Theme name cannot be empty.",
-							})
-							return
-						end
-						newName.CurrentValue = string.gsub(newName.CurrentValue, "/", " ")
-						newName.CurrentValue = string.gsub(newName.CurrentValue, "\\", " ")
+    					if not newName.Values or not newName.Values.CurrentValue or String.IsEmptyOrNull(newName.Values.CurrentValue) then
+   					    	Starlight:Notification({
+				            Title = "Theme Error",
+        				    Icon = 129398364168201,
+    				        Content = "Theme name cannot be empty.",
+    					    })
+				        	return
+					    end
+						newName.Values.CurrentValue = string.gsub(newName.Values.CurrentValue, "/", " ")
+						newName.Values.CurrentValue = string.gsub(newName.Values.CurrentValue, "\\", " ")
 
 						if
-							isfile(`{themesPath}/{newName.CurrentValue}{Starlight.FileSystem.FileExtension}`)
-							or themesArray[newName.CurrentValue]
+    						isfile(`{themesPath}/{newName.Values.CurrentValue}{Starlight.FileSystem.FileExtension}`)
+						    or themesArray[newName.Values.CurrentValue]
 						then
 							Starlight:Notification({
 								Title = "Theme Exists",
@@ -9400,7 +9400,7 @@ function Starlight:CreateWindow(WindowSettings)
 						Starlight:Notification({
 							Title = "Theme Created",
 							Icon = 6026568227,
-							Content = string.format("Created Theme %q", newName.CurrentValue),
+							Content = string.format("Created Theme %q", newName.Values.CurrentValue),
 						})
 					end,
 				}, "newtheme")
