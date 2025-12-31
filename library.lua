@@ -851,21 +851,6 @@ end
 Starlight.Themes = Themes
 Starlight.CurrentTheme = deepCopy(Themes.Starlight)
 
--- Validate the current theme
-local function validateTheme(theme)
-    if not theme then return false end
-    if not theme.Backgrounds or not theme.Foregrounds or not theme.Miscellaneous or not theme.Accents then
-        warn("Theme is missing required categories")
-        return false
-    end
-    return true
-end
-
-if not validateTheme(Starlight.CurrentTheme) then
-    warn("Current theme is invalid, resetting to default Starlight theme")
-    Starlight.CurrentTheme = deepCopy(Themes.Starlight)
-end
-
 --//ENDSUBSECTION
 
 function Tween.Info(style: string?, direction: string?, time: number?)
@@ -885,19 +870,14 @@ local connections = {}
 
 -- used so the index system allows for universal linking without breaking
 local function GetNestedValue(tbl, path)
-    local current = tbl
-    for segment in string.gmatch(path, "[^%.]+") do
-        if typeof(current) ~= "table" then
-            warn("GetNestedValue: Expected table, got " .. typeof(current) .. " for path: " .. path)
-            return nil
-        end
-        if current[segment] == nil then
-            warn("GetNestedValue: Missing key '" .. segment .. "' in path: " .. path)
-            return nil
-        end
-        current = current[segment]
-    end
-    return current
+	local current = tbl
+	for segment in string.gmatch(path, "[^%.]+") do
+		if typeof(current) ~= "table" then
+			return nil
+		end
+		current = current[segment]
+	end
+	return current
 end
 local ClassInterfacer = {
 
@@ -994,30 +974,21 @@ local ConfigMethods = {
 
 local ThemeMethods = {
 	bindTheme = function(object: GuiObject, property, themeKey)
-		
 		local function set()
-    		pcall(task.spawn, function()
-        		local value = GetNestedValue(Starlight.CurrentTheme, themeKey)
-        
-        		-- Add nil check
-        		if not value then
-    		        warn("Theme value is nil for key: " .. tostring(themeKey))
-        		    return
-        		end
-        
-        		if
-           			object.ClassName == "UIGradient"
-        		    and typeof(value) == "Color3"
-        		then
-            		object[property] = ColorSequence.new({
-            		    ColorSequenceKeypoint.new(0, value),
-                		ColorSequenceKeypoint.new(1, value),
-            		})
-            		return
-        		end
+			pcall(task.spawn, function()
+				if
+					object.ClassName == "UIGradient"
+					and typeof(GetNestedValue(Starlight.CurrentTheme, themeKey)) == "Color3"
+				then
+					object[property] = ColorSequence.new({
+						ColorSequenceKeypoint.new(0, GetNestedValue(Starlight.CurrentTheme, themeKey)),
+						ColorSequenceKeypoint.new(1, GetNestedValue(Starlight.CurrentTheme, themeKey)),
+					})
+					return
+				end
 
-		        object[property] = value
-		    end)
+				object[property] = GetNestedValue(Starlight.CurrentTheme, themeKey)
+			end)
 		end
 
 		themeEvent.Event:Connect(set)
@@ -1028,25 +999,14 @@ local ThemeMethods = {
 			if typeof(data) == "Color3" then
 				return { __type = "Color3", R = data.R * 255, G = data.G * 255, B = data.B * 255 }
 			elseif typeof(data) == "ColorSequence" then
-			    local keypoints = {}
-			    -- Add nil check for Keypoints
-			    if not data.Keypoints or #data.Keypoints == 0 then
-        			warn("ColorSequence has no keypoints, using default")
-        			return {
-            			__type = "ColorSequence",
-            			Keypoints = {
-                			{ Time = 0.0, Value = { R = 255, G = 255, B = 255 } },
-                			{ Time = 1.0, Value = { R = 255, G = 255, B = 255 } }
-            			}
-        			}
-    			end
-    			for _, kp in ipairs(data.Keypoints) do
-        			table.insert(keypoints, {
-            			Time = kp.Time,
-            			Value = { R = kp.Value.R * 255, G = kp.Value.G * 255, B = kp.Value.B * 255 },
-        			})
-    			end
-    			return { __type = "ColorSequence", Keypoints = keypoints }
+				local keypoints = {}
+				for _, kp in ipairs(data.Keypoints) do
+					table.insert(keypoints, {
+						Time = kp.Time,
+						Value = { R = kp.Value.R * 255, G = kp.Value.G * 255, B = kp.Value.B * 255 },
+					})
+				end
+				return { __type = "ColorSequence", Keypoints = keypoints }
 			elseif type(data) == "table" then
 				local newTbl = {}
 				for k, v in pairs(data) do
@@ -1070,25 +1030,14 @@ local ThemeMethods = {
 				if value.__type == "Color3" then
 					return Color3.fromRGB(value.R, value.G, value.B)
 				elseif value.__type == "ColorSequence" then
-    				local keypoints = {}
-    				    -- Add nil check for Keypoints
-    				    if not value.Keypoints or type(value.Keypoints) ~= "table" or #value.Keypoints == 0 then
-    				        warn("Invalid ColorSequence data, using default white gradient")
-    				        return ColorSequence.new(Color3.new(1, 1, 1))
-    				    end
-    				    for _, kp in ipairs(value.Keypoints) do
-    				        if kp and kp.Time and kp.Value then
-    				            table.insert(
-    				                keypoints,
-    				                ColorSequenceKeypoint.new(kp.Time, Color3.fromRGB(kp.Value.R, kp.Value.G, kp.Value.B))
-    				            )
-    				        end
-    				    end
-    				    if #keypoints == 0 then
-    				        warn("No valid keypoints found, using default")
-    				        return ColorSequence.new(Color3.new(1, 1, 1))
-    				    end
-    				    return ColorSequence.new(keypoints)
+					local keypoints = {}
+					for _, kp in ipairs(value.Keypoints) do
+						table.insert(
+							keypoints,
+							ColorSequenceKeypoint.new(kp.Time, Color3.fromRGB(kp.Value.R, kp.Value.G, kp.Value.B))
+						)
+					end
+					return ColorSequence.new(keypoints)
 				else
 					local newTbl = {}
 					for k, v in pairs(value) do
@@ -9195,22 +9144,16 @@ function Starlight:CreateWindow(WindowSettings)
 								IgnoreConfig = true,
 								CurrentValue = Starlight.CurrentTheme.Accents.Main.Keypoints[1].Value,
 								Callback = function(c)
-    								debounce = true
-    								if not Starlight.CurrentTheme.Accents or not Starlight.CurrentTheme.Accents.Main then
-								        return
-    								end
-    								local keypoints = Starlight.CurrentTheme.Accents.Main.Keypoints
-    								if not keypoints or #keypoints < 3 then
-    								    return
-    								end
-    								Starlight.CurrentTheme.Accents.Main = ColorSequence.new({
-    								    ColorSequenceKeypoint.new(keypoints[1].Time, c),
-    								    keypoints[2],
-    								    keypoints[3],
-    								})
-    								themeEvent:Fire()
-    								task.wait(6 / 60)
-    								debounce = false
+									debounce = true
+									local keypoints = Starlight.CurrentTheme.Accents.Main.Keypoints
+									Starlight.CurrentTheme.Accents.Main = ColorSequence.new({
+										ColorSequenceKeypoint.new(keypoints[1].Time, c),
+										keypoints[2],
+										keypoints[3],
+									})
+									themeEvent:Fire()
+									task.wait(6 / 60)
+									debounce = false
 								end,
 							}, "1")
 							themeEvent.Event:Connect(function()
@@ -9382,20 +9325,20 @@ function Starlight:CreateWindow(WindowSettings)
 					Icon = 6031471484,
 					CenteredContent = ButtonsCentered,
 					Callback = function()
-    					if not newName.Values or not newName.Values.CurrentValue or String.IsEmptyOrNull(newName.Values.CurrentValue) then
-   					    	Starlight:Notification({
-				            Title = "Theme Error",
-        				    Icon = 129398364168201,
-    				        Content = "Theme name cannot be empty.",
-    					    })
-				        	return
-					    end
-						newName.Values.CurrentValue = string.gsub(newName.Values.CurrentValue, "/", " ")
-						newName.Values.CurrentValue = string.gsub(newName.Values.CurrentValue, "\\", " ")
+						if not newName.CurrentValue or String.IsEmptyOrNull(newName.CurrentValue) then
+							Starlight:Notification({
+								Title = "Theme Error",
+								Icon = 129398364168201,
+								Content = "Theme name cannot be empty.",
+							})
+							return
+						end
+						newName.CurrentValue = string.gsub(newName.CurrentValue, "/", " ")
+						newName.CurrentValue = string.gsub(newName.CurrentValue, "\\", " ")
 
 						if
-    						isfile(`{themesPath}/{newName.Values.CurrentValue}{Starlight.FileSystem.FileExtension}`)
-						    or themesArray[newName.Values.CurrentValue]
+							isfile(`{themesPath}/{newName.CurrentValue}{Starlight.FileSystem.FileExtension}`)
+							or themesArray[newName.CurrentValue]
 						then
 							Starlight:Notification({
 								Title = "Theme Exists",
@@ -9410,7 +9353,7 @@ function Starlight:CreateWindow(WindowSettings)
 								return "File System unavailable."
 							end
 
-							local fullPath = `{themesPath}/{newName.Values.CurrentValue}{Starlight.FileSystem.FileExtension}`
+							local fullPath = `{themesPath}/{newName.CurrentValue}{Starlight.FileSystem.FileExtension}`
 
 							local success, encoded = ThemeMethods.encodeTheme(Starlight.CurrentTheme)
 							if not success then
@@ -9457,7 +9400,7 @@ function Starlight:CreateWindow(WindowSettings)
 						Starlight:Notification({
 							Title = "Theme Created",
 							Icon = 6026568227,
-							Content = string.format("Created Theme %q", newName.Values.CurrentValue),
+							Content = string.format("Created Theme %q", newName.CurrentValue),
 						})
 					end,
 				}, "newtheme")
@@ -9489,22 +9432,15 @@ function Starlight:CreateWindow(WindowSettings)
 					CenteredContent = ButtonsCentered,
 					Style = 1,
 					Callback = function()
-    					if Themes[newThemeToApply] ~= nil then
-    					    Starlight:SetTheme(Themes[newThemeToApply])
-    					else
-        					local decoded = ThemeMethods.decodeTheme(
-        					    readfile(`{themesPath}/{newThemeToApply}{Starlight.FileSystem.FileExtension}`)
-        					)
-        					if decoded then
-        					    Starlight:SetTheme(decoded)
-        					else
-        					    Starlight:Notification({
-        					        Title = "Theme Error",
-        					        Icon = 129398364168201,
-        					        Content = "Failed to decode theme file.",
-        					    })
-        					end
-   						end
+						if Themes[newThemeToApply] ~= nil then
+							Starlight:SetTheme(Themes[newThemeToApply])
+						else
+							Starlight:SetTheme(
+								ThemeMethods.decodeTheme(
+									readfile(`{themesPath}/{newThemeToApply}{Starlight.FileSystem.FileExtension}`)
+								)
+							)
+						end
 					end,
 				}, "applytheme")
 
