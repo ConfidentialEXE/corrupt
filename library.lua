@@ -9144,16 +9144,22 @@ function Starlight:CreateWindow(WindowSettings)
 								IgnoreConfig = true,
 								CurrentValue = Starlight.CurrentTheme.Accents.Main.Keypoints[1].Value,
 								Callback = function(c)
-									debounce = true
-									local keypoints = Starlight.CurrentTheme.Accents.Main.Keypoints
-									Starlight.CurrentTheme.Accents.Main = ColorSequence.new({
-										ColorSequenceKeypoint.new(keypoints[1].Time, c),
-										keypoints[2],
-										keypoints[3],
-									})
-									themeEvent:Fire()
-									task.wait(6 / 60)
-									debounce = false
+    								debounce = true
+    								if not Starlight.CurrentTheme.Accents or not Starlight.CurrentTheme.Accents.Main then
+								        return
+    								end
+    								local keypoints = Starlight.CurrentTheme.Accents.Main.Keypoints
+    								if not keypoints or #keypoints < 3 then
+    								    return
+    								end
+    								Starlight.CurrentTheme.Accents.Main = ColorSequence.new({
+    								    ColorSequenceKeypoint.new(keypoints[1].Time, c),
+    								    keypoints[2],
+    								    keypoints[3],
+    								})
+    								themeEvent:Fire()
+    								task.wait(6 / 60)
+    								debounce = false
 								end,
 							}, "1")
 							themeEvent.Event:Connect(function()
@@ -9432,15 +9438,22 @@ function Starlight:CreateWindow(WindowSettings)
 					CenteredContent = ButtonsCentered,
 					Style = 1,
 					Callback = function()
-						if Themes[newThemeToApply] ~= nil then
-							Starlight:SetTheme(Themes[newThemeToApply])
-						else
-							Starlight:SetTheme(
-								ThemeMethods.decodeTheme(
-									readfile(`{themesPath}/{newThemeToApply}{Starlight.FileSystem.FileExtension}`)
-								)
-							)
-						end
+    					if Themes[newThemeToApply] ~= nil then
+    					    Starlight:SetTheme(Themes[newThemeToApply])
+    					else
+        					local decoded = ThemeMethods.decodeTheme(
+        					    readfile(`{themesPath}/{newThemeToApply}{Starlight.FileSystem.FileExtension}`)
+        					)
+        					if decoded then
+        					    Starlight:SetTheme(decoded)
+        					else
+        					    Starlight:Notification({
+        					        Title = "Theme Error",
+        					        Icon = 129398364168201,
+        					        Content = "Failed to decode theme file.",
+        					    })
+        					end
+   						end
 					end,
 				}, "applytheme")
 
