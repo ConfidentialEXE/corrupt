@@ -851,6 +851,21 @@ end
 Starlight.Themes = Themes
 Starlight.CurrentTheme = deepCopy(Themes.Starlight)
 
+-- Validate the current theme
+local function validateTheme(theme)
+    if not theme then return false end
+    if not theme.Backgrounds or not theme.Foregrounds or not theme.Miscellaneous or not theme.Accents then
+        warn("Theme is missing required categories")
+        return false
+    end
+    return true
+end
+
+if not validateTheme(Starlight.CurrentTheme) then
+    warn("Current theme is invalid, resetting to default Starlight theme")
+    Starlight.CurrentTheme = deepCopy(Themes.Starlight)
+end
+
 --//ENDSUBSECTION
 
 function Tween.Info(style: string?, direction: string?, time: number?)
@@ -870,14 +885,19 @@ local connections = {}
 
 -- used so the index system allows for universal linking without breaking
 local function GetNestedValue(tbl, path)
-	local current = tbl
-	for segment in string.gmatch(path, "[^%.]+") do
-		if typeof(current) ~= "table" then
-			return nil
-		end
-		current = current[segment]
-	end
-	return current
+    local current = tbl
+    for segment in string.gmatch(path, "[^%.]+") do
+        if typeof(current) ~= "table" then
+            warn("GetNestedValue: Expected table, got " .. typeof(current) .. " for path: " .. path)
+            return nil
+        end
+        if current[segment] == nil then
+            warn("GetNestedValue: Missing key '" .. segment .. "' in path: " .. path)
+            return nil
+        end
+        current = current[segment]
+    end
+    return current
 end
 local ClassInterfacer = {
 
@@ -974,21 +994,30 @@ local ConfigMethods = {
 
 local ThemeMethods = {
 	bindTheme = function(object: GuiObject, property, themeKey)
+		
 		local function set()
-			pcall(task.spawn, function()
-				if
-					object.ClassName == "UIGradient"
-					and typeof(GetNestedValue(Starlight.CurrentTheme, themeKey)) == "Color3"
-				then
-					object[property] = ColorSequence.new({
-						ColorSequenceKeypoint.new(0, GetNestedValue(Starlight.CurrentTheme, themeKey)),
-						ColorSequenceKeypoint.new(1, GetNestedValue(Starlight.CurrentTheme, themeKey)),
-					})
-					return
-				end
+    		pcall(task.spawn, function()
+        		local value = GetNestedValue(Starlight.CurrentTheme, themeKey)
+        
+        		-- Add nil check
+        		if not value then
+    		        warn("Theme value is nil for key: " .. tostring(themeKey))
+        		    return
+        		end
+        
+        		if
+           			object.ClassName == "UIGradient"
+        		    and typeof(value) == "Color3"
+        		then
+            		object[property] = ColorSequence.new({
+            		    ColorSequenceKeypoint.new(0, value),
+                		ColorSequenceKeypoint.new(1, value),
+            		})
+            		return
+        		end
 
-				object[property] = GetNestedValue(Starlight.CurrentTheme, themeKey)
-			end)
+		        object[property] = value
+		    end)
 		end
 
 		themeEvent.Event:Connect(set)
