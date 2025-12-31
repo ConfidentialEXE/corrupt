@@ -1067,6 +1067,16 @@ function Table.Remove(tablre: table, value)
 	end
 end
 
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    local bind = Starlight.WindowKeybind
+    if bind and input.KeyCode == Enum.KeyCode[bind] then
+        if Starlight.Window then
+            Starlight.Window:Toggle() -- or whatever the show/hide method is
+        end
+    end
+end)
+
 -- Returns a table with RGB Values of the provided Color
 function Color.Unpack(Color: Color3)
 	return { R = Color.R * 255, G = Color.G * 255, B = Color.B * 255 }
